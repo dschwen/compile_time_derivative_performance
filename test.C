@@ -65,9 +65,12 @@ void transform_reduce()
     dX
   };
 
-  std::vector<Real> in(98000);
-  for (unsigned int i = 1000; i < 99000; ++i)
-    in[i - 1000] = i / 100000.0;
+  const unsigned int N = 10000;
+
+  const Real div = 100.0 * N;
+  std::vector<Real> in(98 * N);
+  for (unsigned int i = N; i < 99 * N; ++i)
+    in[i - N] = i / div;
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -77,11 +80,11 @@ void transform_reduce()
   int n = std::transform_reduce(std::execution::par,
                                 in.begin(), in.end(),
                                 0, std::plus<int>(),
-                                [](const Real v0)
+                                [div](const Real v0)
                                 {
                                   Real v;
                                   int s = 0;
-                                  for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                  for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                     s++;
                                   return s;
                                 });
@@ -89,42 +92,42 @@ void transform_reduce()
   Real r0 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     using namespace CompileTimeDerivatives;
                                     Real v;
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += result();
                                     return s;
                                   });
   Real r1 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     using namespace CompileTimeDerivatives;
                                     Real v;
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += result.D<dX>()();
                                     return s;
                                   });
   Real r2 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     using namespace CompileTimeDerivatives;
                                     Real v;
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += result.D<dX>().D<dX>()();
                                     return s;
                                   });
@@ -138,33 +141,33 @@ void transform_reduce()
   Real s0 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += v * (1.0 - v) - (v * std::log(v) + (1.0 - v) * std::log(1.0 - v));
                                     return s;
                                   });
   Real s1 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += -2.0 * v - std::log(v) + std::log(1.0 - v) - (v - 1.0) / (1.0 - v);
                                     return s;
                                   });
   Real s2 = std::transform_reduce(std::execution::par,
                                   in.begin(), in.end(),
                                   0.0, std::plus<Real>(),
-                                  [](const Real v0)
+                                  [div](const Real v0)
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
+                                    for (v = v0; v < v0 + 1.0 / div; v += 1e-9)
                                       s += -2.0 + 1.0 / (v - 1.0) - 1.0 / v;
                                     return s;
                                   });
@@ -179,7 +182,7 @@ void transform_reduce()
 
 int main()
 {
-  for_loop();
+  // for_loop();
   transform_reduce();
 
   return 0;
