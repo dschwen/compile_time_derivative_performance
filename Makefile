@@ -11,4 +11,4 @@ test-gcc: test.C
 	g++ -o test-gcc test.C $(COMMON)
 
 test-nvc: test.C
-	#nvc++ -o test-gcc test.C $(COMMON)
+	nvc++ -o test-nvc test.C $(COMMON)
