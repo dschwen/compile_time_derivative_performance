@@ -13,9 +13,9 @@ int main()
     dX
   };
 
-  std::vector<Real> in(980);
-  for (unsigned int i = 10; i < 990; ++i)
-    in[i - 10] = i / 1000.0;
+  std::vector<Real> in(98000);
+  for (unsigned int i = 1000; i < 99000; ++i)
+    in[i - 1000] = i / 100000.0;
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -32,7 +32,7 @@ int main()
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += result();
                                     return s;
                                   });
@@ -46,7 +46,7 @@ int main()
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += result.D<dX>()();
                                     return s;
                                   });
@@ -60,7 +60,7 @@ int main()
                                     const auto x = makeRef<dX>(v);
                                     const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += result.D<dX>().D<dX>()();
                                     return s;
                                   });
@@ -78,7 +78,7 @@ int main()
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += v * (1.0 - v) - (v * std::log(v) + (1.0 - v) * std::log(1.0 - v));
                                     return s;
                                   });
@@ -89,7 +89,7 @@ int main()
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += -2.0 * v - std::log(v) + std::log(1.0 - v) - (v - 1.0) / (1.0 - v);
                                     return s;
                                   });
@@ -100,7 +100,7 @@ int main()
                                   {
                                     Real v;
                                     Real s = 0.0;
-                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                    for (v = v0; v <= v0 + 1.0 / 100000.0; v += 1e-9)
                                       s += -2.0 + 1.0 / (v - 1.0) - 1.0 / v;
                                     return s;
                                   });
@@ -109,6 +109,7 @@ int main()
   std::cout << std::chrono::duration<double>(end - start).count() << "s\n";
 
   std::cout << "Diffs: " << (r0 - s0) << ", " << (r1 - s1) << ", " << (r2 - s2) << '\n';
+  std::cout << "Vals: " << r0 << ", " << r1 << ", " << r2 << '\n';
 
   return 0;
 }
