@@ -11,4 +11,4 @@ test-gcc: test.C
 	g++ -o test-gcc test.C $(COMMON)
 
 test-nvc: test.C
-	nvc++ -o test-nvc test.C $(COMMON)
+	nvc++ -stdpar=gpu -o test-nvc test.C $(COMMON)

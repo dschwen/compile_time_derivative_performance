@@ -2,58 +2,9 @@
 #include <chrono>
 #include <execution>
 #include <algorithm>
+#include <numeric>
 
 using namespace libMesh;
-using namespace CompileTimeDerivatives;
-
-class FloatRange
-{
-public:
-  class iterator
-  {
-  public:
-    iterator(Real i, Real di) : _i(i), _di(di) {}
-
-    Real operator*() const { return _i; }
-
-    const iterator &operator++()
-    {
-      _i += _di;
-      return *this;
-    }
-
-    iterator operator++(int)
-    {
-      iterator returnval(*this);
-      ++_i;
-      return returnval;
-    }
-
-    bool operator==(const iterator &j) const
-    {
-      return (_i >= j._i);
-    }
-
-    bool operator!=(const iterator &j) const
-    {
-      return !(*this == j);
-    }
-
-  private:
-    Real _i, _di;
-  };
-
-  FloatRange(Real begin, Real end, Real step) : _begin(begin, step),
-                                                _end(end, step)
-  {
-  }
-
-  iterator begin() const { return _begin; }
-  iterator end() const { return _end; }
-
-private:
-  iterator _begin, _end;
-};
 
 int main()
 {
@@ -62,39 +13,98 @@ int main()
     dX
   };
 
-  const auto range = FloatRange(0.01, 0.99, 1e-9);
-
-  Real r0 = 0, r1 = 0, r2 = 0;
-  Real s0 = 0, s1 = 0, s2 = 0;
+  std::vector<Real> in(980);
+  for (unsigned int i = 10; i < 990; ++i)
+    in[i - 10] = i / 1000.0;
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   // evaluate expression template
   start = std::chrono::system_clock::now();
 
-  for (auto v : range)
-  {
-    const auto x = makeRef<dX>(v);
-    const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
+  Real r0 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    using namespace CompileTimeDerivatives;
+                                    Real v;
+                                    const auto x = makeRef<dX>(v);
+                                    const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += result();
+                                    return s;
+                                  });
+  Real r1 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    using namespace CompileTimeDerivatives;
+                                    Real v;
+                                    const auto x = makeRef<dX>(v);
+                                    const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += result.D<dX>()();
+                                    return s;
+                                  });
+  Real r2 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    using namespace CompileTimeDerivatives;
+                                    Real v;
+                                    const auto x = makeRef<dX>(v);
+                                    const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += result.D<dX>().D<dX>()();
+                                    return s;
+                                  });
 
-    r0 += result();
-    r1 += result.D<dX>()();
-    r2 += result.D<dX>().D<dX>()();
-  }
   end = std::chrono::system_clock::now();
   std::cout << std::chrono::duration<double>(end - start).count() << "s\n";
 
   // evaluate native expression
   start = std::chrono::system_clock::now();
-  for (auto v : range)
-  {
-    const auto x = makeRef<dX>(v);
-    const auto result = x * (1.0 - x) - (x * log(x) + (1.0 - x) * log(1.0 - x));
 
-    s0 += v * (1.0 - v) - (v * std::log(v) + (1.0 - v) * std::log(1.0 - v));
-    s1 += -2.0 * v - std::log(v) + std::log(1.0 - v) - (v - 1.0) / (1.0 - v);
-    s2 += -2.0 + 1.0 / (v - 1.0) - 1.0 / v;
-  }
+  Real s0 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    Real v;
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += v * (1.0 - v) - (v * std::log(v) + (1.0 - v) * std::log(1.0 - v));
+                                    return s;
+                                  });
+  Real s1 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    Real v;
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += -2.0 * v - std::log(v) + std::log(1.0 - v) - (v - 1.0) / (1.0 - v);
+                                    return s;
+                                  });
+  Real s2 = std::transform_reduce(std::execution::par,
+                                  in.begin(), in.end(),
+                                  0.0, std::plus<Real>(),
+                                  [](const Real v0)
+                                  {
+                                    Real v;
+                                    Real s = 0.0;
+                                    for (v = v0; v <= v0 + 1.0 / 1000.0; v += 1e-9)
+                                      s += -2.0 + 1.0 / (v - 1.0) - 1.0 / v;
+                                    return s;
+                                  });
+
   end = std::chrono::system_clock::now();
   std::cout << std::chrono::duration<double>(end - start).count() << "s\n";
 
